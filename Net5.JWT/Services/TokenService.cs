@@ -18,14 +18,30 @@ namespace Net5.JWT.Services
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new Claim(ClaimTypes.Name, user.Username.ToString()),
-                    new Claim(ClaimTypes.Role, user.Role.ToString())
+                    new Claim(ClaimTypes.Name, user.Id.ToString()),
+                    new Claim(ClaimTypes.Role, user.RoleRefId.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddHours(EXPIRE_HOURS),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(descriptor);
             return tokenHandler.WriteToken(token);
+        }
+
+        public static JwtSecurityToken Verify(string jwt)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(Settings.Secret);
+            tokenHandler.ValidateToken(jwt, new TokenValidationParameters
+            {
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuerSigningKey = true,
+                ValidateIssuer = false,
+                ValidateAudience = false
+            },
+                out SecurityToken validatedToken);
+
+            return (JwtSecurityToken)validatedToken;
         }
     }
 }
